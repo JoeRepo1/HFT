@@ -1,6 +1,4 @@
-Small trading app to demo a few HFT design components and related C++20 features.
----------------------------------------------------------------------------------
-
+## Small trading app to demo a few HFT design components and related C++20 features.
 The project demonstrates a hybrid trading system that integrates multiple algorithmic strategies, dynamically selecting and blending their outputs based on real-time market conditions.
 
 ## Disclaimer
