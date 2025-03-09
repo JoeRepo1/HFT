@@ -103,5 +103,5 @@ uint64_t ConnectionFactory::make_cache_key(const ConnectionConfig& cfg) {
   return (static_cast<uint64_t>(cfg.venue      ) << 24)
        | (static_cast<uint64_t>(cfg.protocol   ) << 16)
        | (static_cast<uint64_t>(cfg.low_latency) <<  8)
-       | (cfg.port                               <<  0);
+       | (static_cast<uint64_t>(cfg.port       ) <<  0);
 }
