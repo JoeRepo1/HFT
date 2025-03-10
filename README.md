@@ -68,7 +68,7 @@ The custom "Hot Pattern" algorithm activates under specific conditions—such as
 ## License
 This project is distributed under the MIT License. Refer to the LICENSE file for full terms and conditions.
 
-## Strategy Ethic Risks
+## Ethical Risks
 1. **Pair Trading**  
   - Front-running correlated assets.  
   - Misuse of non-public data.  
