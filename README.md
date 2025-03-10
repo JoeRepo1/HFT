@@ -67,3 +67,51 @@ The custom "Hot Pattern" algorithm activates under specific conditions—such as
 
 ## License
 This project is distributed under the MIT License. Refer to the LICENSE file for full terms and conditions.
+
+## Strategy Ethics
+
+### 1. **Pair Trading Signal**  
+- **Ethical Risk**: Low  
+- **Key Concerns**:  
+  - Front-running correlated assets (e.g., ETFs vs. underlying securities).  
+  - Misuse of non-public data (e.g., client trading activity).  
+
+### 2. **Microstructure Alpha Signal**  
+- **Ethical Risk**: Moderate  
+- **Key Concerns**:  
+  - Exploiting latency advantages (e.g., colocation) to harm slower participants.  
+  - May violate "fair access" principles in some jurisdictions.  
+
+### 3. **Order Book Imbalance Signal**  
+- **Ethical Risk**: Low  
+- **Key Concerns**:  
+  - Illegal if combined with **spoofing** (fake orders to manipulate the book).  
+  - Ensure compliance with **SEC Rule 15c3-5** (market access controls).  
+
+### 4. **Momentum Ignition Signal**  
+- **Ethical Risk**: High ⚠️  
+- **Key Concerns**:  
+  - Often classified as market manipulation (e.g., triggering stop-loss orders artificially).  
+  - Prohibited under **MiFID II** and **Dodd-Frank** if used to distort prices.  
+
+### 5. **Volatility Breakout Signal**  
+- **Ethical Risk**: Moderate  
+- **Key Concerns**:  
+  - Risk of amplifying "flash crashes" during market stress.  
+  - Ensure no **quote stuffing** to create artificial volatility.  
+
+### 6. General Red Flags
+- 🚩 **Market Manipulation**: Strategies that deceive participants (e.g., spoofing, layering) violate **SEC Rule 10b-5**.  
+- 🚩 **Data Sourcing**: Verify all data is legally obtained (e.g., exchange licenses for order book feeds).  
+- 🚩 **Systemic Risk**: Over-optimized HFT may destabilize markets during extreme events.  
+
+### 7. Recommendations
+1. **Compliance Review**: Validate against regulations like:  
+   - MiFID II (EU)  
+   - Reg SCI (US)  
+   - SEC Market Abuse Regulation  
+2. **Documentation**: Clearly document intent and mechanics to demonstrate non-manipulative design.  
+3. **Risk Controls**: Implement:  
+   - Circuit breakers  
+   - Position size limits  
+   - Kill switches  
