@@ -66,7 +66,7 @@ The daemon adheres to a modular structure, with the following workflow:
 The custom "Hot Pattern" algorithm activates under specific conditions—such as high volatility coupled with tight spreads and latent liquidity—enhancing potential returns.
 
 ## License
-This project is distributed under the MIT License. Refer to the LICENSE file for full terms and conditions.
+This project is distributed under the [MIT License](https://opensource.org/license/mit/). Refer to the LICENSE file for full terms and conditions.
 
 ## Ethical Risks
 1. **Pair Trading**  
