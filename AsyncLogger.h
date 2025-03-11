@@ -1,4 +1,4 @@
-#pragma once
+#pragma once  //AsyncLogger.h
 
 #include <atomic>
 #include <chrono>
@@ -32,11 +32,11 @@ private:
   std::atomic<bool> stop_flag;
   static constexpr size_t LOG_QUEUE_SIZE = 1024;
 
-  std::vector<std::string> buffer{ LOG_QUEUE_SIZE };  // Lock-free ring buffer
+  std::vector<std::string> buffer{ LOG_QUEUE_SIZE };  //lock-free ring buffer
   std::atomic<size_t> head, tail;
 
-  void push(std::string&& log_entry);   // Non-blocking enqueue
-  bool pop(std::string& log_entry);   // Blocking dequeue
+  void push(std::string&& log_entry);   //non-blocking enqueue
+  bool pop(std::string& log_entry);   //blocking dequeue
   void processLogs();
   void flushLogs();
   std::string getTimestamp();
