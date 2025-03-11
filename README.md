@@ -118,6 +118,7 @@ This project is distributed under the [MIT License](https://opensource.org/licen
 
 ## AI Integration
 
+
 | **AI Model Type**         | **Performance Impact** | **Use in Application**           | **Dataset Required**          |
 |---------------------------|------------------------|----------------------------------|-------------------------------|
 | **LSTM (Long Short-Term Memory)** | High                   | Signal Prediction                | Historical Price Data         |
