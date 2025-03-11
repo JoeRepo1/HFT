@@ -115,3 +115,13 @@ This project is distributed under the [MIT License](https://opensource.org/licen
   - Validate against regulations like:  MiFID II (EU), Reg SCI (US), SEC Market Abuse Regulation.
   - Clearly document intent and mechanics to demonstrate non-manipulative design.  
   - Implement: circuit breakers, position size limits, kill switches.
+
+## AI Integration
+
+| **AI Model Type**         | **Performance Impact** | **Use in Application**           | **Dataset Required**          |
+|---------------------------|------------------------|----------------------------------|-------------------------------|
+| **LSTM (Long Short-Term Memory)** | High                   | Signal Prediction                | Historical Price Data         |
+| **GNN (Graph Neural Network)**    | Medium                 | Order Book Analysis              | Order Book Data               |
+| **Autoencoder**           | Low                    | Anomaly Detection                | Market Features               |
+| **Reinforcement Learning**| High                   | Execution Optimization           | Trading History               |
+| **NLP (Natural Language Processing)** | Medium             | News Sentiment Analysis          | News Feeds                    |
