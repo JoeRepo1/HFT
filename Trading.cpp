@@ -66,10 +66,9 @@ private:
     MarketFeatures features = computeFeatures();
     aiEngine->updateModel(features, current_exposure);
 
-    // AI-driven market regime filter
     if (features.regime_confidence < 0.2) {
       L("Low confidence regime - holding position");
-      return;
+      //return;  //replace after testing
     }
 
     L("Computed features: volatility=", features.volatility, ", trend_strength=", features.trend_strength);
