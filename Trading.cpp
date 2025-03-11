@@ -16,19 +16,24 @@
 #include <ranges>
 #include <tuple>
 #include <utility>
+#include <algorithm>
 
 #include "AsyncLogger.h"
 #include "AlignedBuffer.h"
 #include "ConnectionFactory.h"
+#include "AI.h"
 
 class Trading {
 public:
-  Trading() : logger("trading_log.txt") {}
+  Trading() : logger("trading_log.txt"), aiEngine(std::make_unique<AI>()) {
+    aiEngine->loadModels("/path/to/ai/models");
+  }
 
   void run() { hybridAlgo(); }
 
 private:
   AsyncLogger logger;
+  std::unique_ptr<AI> aiEngine;
 
   double current_exposure = 0.0;
   constexpr static double alpha = 0.3;
@@ -59,6 +64,13 @@ private:
 
   void hybridAlgo() {
     MarketFeatures features = computeFeatures();
+    aiEngine->updateModel(features, current_exposure);
+
+    // AI-driven market regime filter
+    if (features.regime_confidence < 0.2) {
+      L("Low confidence regime - holding position");
+      return;
+    }
 
     L("Computed features: volatility=", features.volatility, ", trend_strength=", features.trend_strength);
 
@@ -75,7 +87,7 @@ private:
 
     updateEWMA(signals_buff.span());
 
-    auto [total_weight, blended_signal] = blendSignals(signals_buff.span(), confidence_threshold);
+    auto [total_weight, blended_signal] = blendSignals(signals_buff.span(), confidence_threshold, features);
 
     if (total_weight > 0) {
       blended_signal /= total_weight;
@@ -112,7 +124,7 @@ private:
     double liquidity = estimateLiquidity();
     auto [bid_ask, imbalance] = getOrderBookMetrics();
 
-    return {
+    MarketFeatures features {
         .volatility = volatility,
         .trend_strength = trend,
         .order_book_imbalance = imbalance,
@@ -122,6 +134,10 @@ private:
         .short_term_reversal = detectShortTermReversal(),
         .bid_ask_spread = bid_ask
     };
+
+    aiEngine->computeAIFeatures(features);
+
+    return features;
   }
 
   double computeGarchVolatility(double return_t) {
@@ -222,10 +238,14 @@ private:
 
   struct BlendResult { double total_weight; double blended_signal; };
 
-  BlendResult blendSignals(std::span<const double> signals, double confidence_threshold) {
+  BlendResult blendSignals(std::span<const double> signals, double confidence_threshold, const MarketFeatures& features) {
+    double ai_signal = aiEngine->predictSignal(features);
+    double ai_weight = features.regime_confidence * 0.3;
     double total_weight = 0.0, blended_signal = 0.0;
 
     if (has_avx2()) {
+      __m256d ai_vec = _mm256_set1_pd(ai_signal * ai_weight);
+
       __m256d total_weight_vec = _mm256_setzero_pd();
       __m256d blended_signal_vec = _mm256_setzero_pd();
 
@@ -259,12 +279,21 @@ private:
           blended_signal += ewma_pnl[i] * signals[i];
         }
     }
-    else
+    else {
       for (size_t i = 0; i < signals.size(); ++i)
         if (ewma_pnl[i] > min_weight && std::abs(signals[i]) > confidence_threshold) {
           total_weight += ewma_pnl[i];
           blended_signal += ewma_pnl[i] * signals[i];
         }
+    }
+
+    total_weight += ai_weight;
+    blended_signal += ai_weight * ai_signal;
+
+    if (features.anomaly_score > 0.95) {
+      L("AI anomaly override - zeroing signals");
+      return { 0.0, 0.0 };
+    }
 
     return { total_weight, blended_signal };
   }
@@ -285,28 +314,50 @@ private:
   }
 
   std::tuple<double, int, bool> smartExecute(double signal, const MarketFeatures& features) {
+    auto [ai_adjustment, risk_score] = aiEngine->predictOptimalExecution(features);
+
+    //calculate the base order size from the signal
     double base_size = std::abs(signal) * 100;
-    double adjusted_size = base_size / (1.0 + std::abs(current_exposure) / max_exposure);
-    
-    if (features.liquidity_score < 0.3) adjusted_size *= 0.5;
-    
-    double size = std::clamp(adjusted_size * std::exp(-5.0 * features.price_impact), 1.0, max_order_size);
+
+    //apply AI-driven adjustments for risk and news sentiment
+    double ai_adjusted_size = base_size * (1.0 - risk_score);
+    ai_adjusted_size *= 1.0 + std::tanh(features.news_sentiment * 2.0);
+
+    //adjust for current exposure to manage risk
+    double exposure_adjusted_size = ai_adjusted_size / (1.0 + std::abs(current_exposure) / max_exposure);
+
+    //apply liquidity and price impact adjustments
+    if (features.liquidity_score < 0.3) {
+      exposure_adjusted_size *= 0.5; // Reduce size by half if liquidity is low
+    }
+    double final_size = exposure_adjusted_size * std::exp(-5.0 * features.price_impact);
+
+    //clamp the final size to ensure it stays within allowed limits
+    double size = std::clamp(final_size, 1.0, max_order_size);
+
+    if (features.anomaly_score > 0.98) {
+      L("Critical anomaly detected - order canceled");
+      return { 0.0, 0, false };
+    }
+
     int qty = static_cast<int>(size);
     double price = 100.0 * (1.0 + (signal > 0 ? features.bid_ask_spread : -features.bid_ask_spread));
-    char side = (signal > 0) ? 'B' : 'S';
-    
-    Order order {
-      .exchange = Exchange::NYSE,  //ph
-      .side = side,
-      .symbol = symbols.AAPL,      //ph
-      .order_id = order_id_counter.fetch_add(1, std::memory_order_relaxed),
-      .price = price,
-      .quantity = qty,
+    char side = (signal > 0) ? 'B' : 'S'; // buy/sell
+
+    Order order{
+        .exchange = Exchange::NYSE,  // ph exchange
+        .side = side,
+        .symbol = symbols.AAPL,      // ph symbol
+        .order_id = order_id_counter.fetch_add(1, std::memory_order_relaxed),
+        .price = price,
+        .quantity = qty,
     };
 
-    if (limitCheck(price, qty) && sendOrder(order)) return { price, qty, true };
+    if (limitCheck(price, qty) && sendOrder(order)) {
+      return { price, qty, true };
+    }
 
-    return { price, qty, false };
+    return { price, qty, false }; 
   }
 
   void updateExposure(bool is_buy, double price, int quantity) {

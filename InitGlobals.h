@@ -1,3 +1,5 @@
+//InitGlobals.h
+
 #pragma once
 
 #ifdef _MSC_VER
@@ -42,6 +44,11 @@ struct MarketFeatures {
   double liquidity_score;
   double short_term_reversal;
   double bid_ask_spread;
+  double news_sentiment;         //real-time NLP API
+  double latent_orderbook_state; //Graph Neural Network output
+  double regime_confidence;      //LSTM-based regime classifier
+  double anomaly_score;          //autoencoder anomaly detection
+  double rl_execution_adjust;    //reinforcement learning output};
 };
 
 struct Symbols {
