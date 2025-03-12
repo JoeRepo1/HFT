@@ -15,16 +15,16 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="AsyncLogger.cpp">
+    <ClCompile Include="Src\AsyncLogger.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="ConnectionFactory.cpp">
+    <ClCompile Include="Src\ConnectionFactory.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Trading.cpp">
+    <ClCompile Include="Src\pch.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="pch.cpp">
+    <ClCompile Include="Src\Trading.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
