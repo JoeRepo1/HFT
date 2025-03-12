@@ -31,7 +31,7 @@ public:
     
     auto indepPath = modelPath.string();
   }
-  
+
   double analyzeNewsFeed() { /* NLP API call */ return 0.0; }
 
 private:
