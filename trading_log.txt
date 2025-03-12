@@ -6,3 +6,12 @@
 2025-03-11 15:16:01.753073000 Low confidence regime - holding position
 2025-03-11 15:16:01.753073000 Computed features: volatility=0.0094921, trend_strength=3.13463e-07
 2025-03-11 15:16:01.799873100 No tradable signal detected
+2025-03-12 13:20:24.304485500 Low confidence regime - holding position
+2025-03-12 13:20:24.429285800 Computed features: volatility=0.0094921, trend_strength=3.13463e-07
+2025-03-12 13:20:24.569686000 No tradable signal detected
+2025-03-12 14:16:15.067880500 Low confidence regime - holding position
+2025-03-12 14:16:15.067880500 Computed features: volatility=0.0094921, trend_strength=3.13463e-07
+2025-03-12 14:16:15.145880700 No tradable signal detected
+2025-03-12 14:35:39.348491600 Low confidence regime - holding position
+2025-03-12 14:35:39.348491600 Computed features: volatility=0.0094921, trend_strength=3.13463e-07
+2025-03-12 14:35:39.348491600 No tradable signal detected
