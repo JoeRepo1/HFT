@@ -26,7 +26,12 @@ public:
     return { rlExecutionModel.predict(f), riskModel.predict(f) };
   }
 
-  void loadModels(const std::string& path) { (void)path; }
+  void loadModels(const std::string& path) {
+    std::filesystem::path modelPath = path;
+    
+    auto indepPath = modelPath.string();
+  }
+  
   double analyzeNewsFeed() { /* NLP API call */ return 0.0; }
 
 private:

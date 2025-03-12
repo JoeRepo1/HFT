@@ -46,3 +46,9 @@
 #endif
 
 #include "InitGlobals.h"
+
+//trading.cpp
+using std::abs, std::async, std::clamp, std::exp, std::make_unique, std::max, std::sqrt, std::tanh;
+using std::cin, std::cout, std::memory_order_relaxed, std::ranges::transform;
+using std::array, std::atomic, std::function, std::launch, std::pair, std::ranges::subrange,
+      std::span, std::tuple, std::unique_ptr, std::unordered_map, std::vector;

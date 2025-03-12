@@ -6,7 +6,7 @@
 
 class Trading {
 public:
-  Trading() : logger("trading_log.txt"), aiEngine(std::make_unique<AI>()) {
+  Trading() : logger("trading_log.txt"), aiEngine(make_unique<AI>()) {
     aiEngine->loadModels("/path/to/ai/models");
   }
 
@@ -14,7 +14,7 @@ public:
 
 private:
   AsyncLogger logger;
-  std::unique_ptr<AI> aiEngine;
+  unique_ptr<AI> aiEngine;
 
   double current_exposure = 0.0;
   constexpr static double alpha = 0.3;
@@ -27,11 +27,11 @@ private:
   constexpr static double alpha_garch = 0.1;
   constexpr static double beta_garch = 0.8;
   double prev_volatility = 0.01;
-  inline static std::atomic<uint64_t> order_id_counter = 0;
+  inline static atomic<uint64_t> order_id_counter = 0;
 
-  using SignalStrategy = std::function<double(const MarketFeatures&)>;
+  using SignalStrategy = function<double(const MarketFeatures&)>;
 
-  const std::vector<SignalStrategy> strategies = {
+  const vector<SignalStrategy> strategies = {
     [this](const auto& f) { return pairTradingSignal(f); },
     [this](const auto& f) { return microstructureAlphaSignal(f); },
     [this](const auto& f) { return orderBookImbalanceSignal(f); },
@@ -56,13 +56,12 @@ private:
 
     L("Computed features: volatility=", features.volatility, ", trend_strength=", features.trend_strength);
 
-    double confidence_threshold = std::max(0.05, 0.1 * features.volatility);
+    double confidence_threshold = max(0.05, 0.1 * features.volatility);
 
     auto compute_signal = [&features](const auto& strategy) { return strategy(features); };
 
-    auto future_pair_signal = std::async(std::launch::async, compute_signal, strategies[0]);
+    auto future_pair_signal = async(launch::async, compute_signal, strategies[0]);
 
-    using namespace std::ranges;
     transform(subrange(strategies.begin() + 1, strategies.end()), signals_buff.data() + 1, compute_signal);
 
     signals_buff[0] = future_pair_signal.get();
@@ -76,9 +75,9 @@ private:
 
       L("Blended signal: ", blended_signal, " with total weight: ", total_weight);
 
-      double potential_exposure = std::abs(current_exposure) + std::abs(blended_signal) * 100;
+      double potential_exposure = abs(current_exposure) + abs(blended_signal) * 100;
 
-      if (potential_exposure <= max_exposure && std::abs(blended_signal) > 0.01) {
+      if (potential_exposure <= max_exposure && abs(blended_signal) > 0.01) {
         auto [px, qty, filled] = smartExecute(blended_signal, features);
 
         if (filled) {
@@ -95,14 +94,14 @@ private:
 
   MarketFeatures computeFeatures() {
     static constexpr size_t kWindowSize = 100;
-    static std::array<double, kWindowSize> returns_buffer{};
+    static array<double, kWindowSize> returns_buffer{};
     static size_t buffer_pos = 0;
 
     double return_t = getLatestReturn();
     returns_buffer[buffer_pos++ % kWindowSize] = return_t;
 
     double volatility = computeGarchVolatility(return_t);
-    double trend = detectTrend(std::span(returns_buffer));
+    double trend = detectTrend(span(returns_buffer));
     double liquidity = estimateLiquidity();
     auto [bid_ask, imbalance] = getOrderBookMetrics();
 
@@ -124,13 +123,13 @@ private:
 
   double computeGarchVolatility(double return_t) {
     double variance = omega + alpha_garch * return_t * return_t + beta_garch * prev_volatility * prev_volatility;
-    double volatility = std::sqrt(variance);
-    prev_volatility = std::clamp(volatility, 0.0001, 5.0);
+    double volatility = sqrt(variance);
+    prev_volatility = clamp(volatility, 0.0001, 5.0);
 
     return volatility;
   }
 
-  double detectTrend(std::span<const double> returns) {
+  double detectTrend(span<const double> returns) {
     if (returns.empty()) return 0.0;
 
     double sum = 0.0, weight = 1.0, total_weight = 0.0;
@@ -152,9 +151,9 @@ private:
     double signal = 0.0;
 
     if (f.bid_ask_spread < 0.02 && f.order_book_imbalance > 0.5)
-      signal = 1.0 * std::exp(-5.0 * f.price_impact);
+      signal = 1.0 * exp(-5.0 * f.price_impact);
     else if (f.bid_ask_spread < 0.02 && f.order_book_imbalance < -0.5)
-      signal = -1.0 * std::exp(-5.0 * f.price_impact);
+      signal = -1.0 * exp(-5.0 * f.price_impact);
 
     return signal;
   }
@@ -189,7 +188,7 @@ private:
     if (tight_spread_high_vol && contra_flow && hidden_liquidity) {
       signal = (f.cointegration_zscore > 0) ? -2.0 : 2.0;
 
-      if (std::abs(f.trend_strength) < 0.2) signal *= 1.5;
+      if (abs(f.trend_strength) < 0.2) signal *= 1.5;
 
       L("HotPatternA detected! Signal strength: ", signal);
     }
@@ -197,7 +196,7 @@ private:
     return signal;
   }
 
-  void updateEWMA(std::span<const double> signals) {
+  void updateEWMA(span<const double> signals) {
     if (has_avx2()) {
       for (size_t i = 0; i < signals.size() - 3; i += 4) {
         __m256d signals_vec     = _mm256_loadu_pd(&signals[i]);
@@ -220,7 +219,7 @@ private:
 
   struct BlendResult { double total_weight; double blended_signal; };
 
-  BlendResult blendSignals(std::span<const double> signals, double confidence_threshold, const MarketFeatures& features) {
+  BlendResult blendSignals(span<const double> signals, double confidence_threshold, const MarketFeatures& features) {
     double ai_signal = aiEngine->predictSignal(features);
     double ai_weight = features.regime_confidence * 0.3;
     double total_weight = 0.0, blended_signal = 0.0;
@@ -253,14 +252,14 @@ private:
       blended_signal = signal_arr[0] + signal_arr[1] + signal_arr[2] + signal_arr[3];
 
       for (size_t i = (signals.size() / 4) * 4; i < signals.size(); ++i)
-        if (ewma_pnl[i] > min_weight && std::abs(signals[i]) > confidence_threshold) {
+        if (ewma_pnl[i] > min_weight && abs(signals[i]) > confidence_threshold) {
           total_weight   += ewma_pnl[i];
           blended_signal += ewma_pnl[i] * signals[i];
         }
     }
     else {
       for (size_t i = 0; i < signals.size(); ++i)
-        if (ewma_pnl[i] > min_weight && std::abs(signals[i]) > confidence_threshold) {
+        if (ewma_pnl[i] > min_weight && abs(signals[i]) > confidence_threshold) {
           total_weight   += ewma_pnl[i];
           blended_signal += ewma_pnl[i] * signals[i];
         }
@@ -277,7 +276,7 @@ private:
     return { total_weight, blended_signal };
   }
 
-  std::unordered_map<Exchange, ConnectionFactory::ConnectionPtr> _venue_connections;
+  unordered_map<Exchange, ConnectionFactory::ConnectionPtr> _venue_connections;
   Symbols symbols;
 
   bool sendOrder(const Order& order) {
@@ -292,23 +291,23 @@ private:
     return conn->send(order);
   }
 
-  std::tuple<double, int, bool> smartExecute(double signal, const MarketFeatures& features) {
+  tuple<double, int, bool> smartExecute(double signal, const MarketFeatures& features) {
     auto [ai_adjustment, risk_score] = aiEngine->predictOptimalExecution(features);
 
-    double base_size = std::abs(signal) * 100;    //calculate the base order size from the signal
+    double base_size = abs(signal) * 100;    //calculate the base order size from the signal
 
     double ai_adjusted_size = base_size * (1.0 - risk_score);    //apply AI-driven adjustments for risk and news sentiment
-    ai_adjusted_size *= 1.0 + std::tanh(features.news_sentiment * 2.0);
+    ai_adjusted_size *= 1.0 + tanh(features.news_sentiment * 2.0);
 
-    double exposure_adjusted_size = ai_adjusted_size / (1.0 + std::abs(current_exposure) / max_exposure);    //adjust for current exposure to manage risk
+    double exposure_adjusted_size = ai_adjusted_size / (1.0 + abs(current_exposure) / max_exposure);    //adjust for current exposure to manage risk
 
     if (features.liquidity_score < 0.3) {    //apply liquidity and price impact adjustments
-      exposure_adjusted_size *= 0.5; // Reduce size by half if liquidity is low
+      exposure_adjusted_size *= 0.5;   //reduce size by half if liquidity is low
     }
 
-    double final_size = exposure_adjusted_size * std::exp(-5.0 * features.price_impact);
+    double final_size = exposure_adjusted_size * exp(-5.0 * features.price_impact);
 
-    double size = std::clamp(final_size, 1.0, max_order_size);    //clamp the final size to ensure it stays within allowed limits
+    double size = clamp(final_size, 1.0, max_order_size);    //clamp the final size to ensure it stays within allowed limits
 
     if (features.anomaly_score > 0.98) {
       L("Critical anomaly detected - order canceled");
@@ -323,7 +322,7 @@ private:
       .exchange = Exchange::NYSE,  // ph exchange
       .side = side,
       .symbol = symbols.AAPL,      // ph symbol
-      .order_id = order_id_counter.fetch_add(1, std::memory_order_relaxed),
+      .order_id = order_id_counter.fetch_add(1, memory_order_relaxed),
       .price = price,
       .quantity = qty,
     };
@@ -335,7 +334,7 @@ private:
     current_exposure += (is_buy ? 1.0 : -1.0) * price * quantity;
   }
 
-  std::pair<double, double> getOrderBookMetrics() { return { 0.01, 0.2 };            }
+  pair<double, double> getOrderBookMetrics() { return { 0.01, 0.2 };            }
   double computeCointegration()                   { return -1.5;                     }
   double estimateLiquidity()                      { return 0.7;                      }
   double estimatePriceImpact(double liquidity)    { return 0.01 / (liquidity + 0.1); }
@@ -343,7 +342,7 @@ private:
   double getLatestReturn()                        { return 0.001;                    }
   
   bool limitCheck(const double price, const int qty) {
-    return std::abs(current_exposure) + price * qty <= max_exposure && price * qty <= vol_limit * 10000.0;
+    return abs(current_exposure) + price * qty <= max_exposure && price * qty <= vol_limit * 10000.0;
   }
 
   bool has_avx2() const {
@@ -374,6 +373,6 @@ int main() {
   Trading trading;
   trading.run();
 
-  std::cout << "Enter to continue.\n";
-  std::cin.get();
+  cout << "Enter to continue.\n";
+  cin.get();
 }
