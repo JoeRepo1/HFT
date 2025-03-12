@@ -32,12 +32,12 @@ private:
   using SignalStrategy = std::function<double(const MarketFeatures&)>;
 
   const std::vector<SignalStrategy> strategies = {
-      [this](const auto& f) { return pairTradingSignal(f); },
-      [this](const auto& f) { return microstructureAlphaSignal(f); },
-      [this](const auto& f) { return orderBookImbalanceSignal(f); },
-      [this](const auto& f) { return momentumIgnitionSignal(f); },
-      [this](const auto& f) { return volatilityBreakoutSignal(f); },
-      [this](const auto& f) { return hotPatternA(f); }
+    [this](const auto& f) { return pairTradingSignal(f); },
+    [this](const auto& f) { return microstructureAlphaSignal(f); },
+    [this](const auto& f) { return orderBookImbalanceSignal(f); },
+    [this](const auto& f) { return momentumIgnitionSignal(f); },
+    [this](const auto& f) { return volatilityBreakoutSignal(f); },
+    [this](const auto& f) { return hotPatternA(f); }
   };
 
   AlignedBuffer<double> ewma_pnl{ strategies.size() };
@@ -49,7 +49,9 @@ private:
 
     if (features.regime_confidence < 0.2) {
       L("Low confidence regime - holding position");
-      //return;  //replace after testing
+#ifndef _DEBUG
+      return;
+#endif
     }
 
     L("Computed features: volatility=", features.volatility, ", trend_strength=", features.trend_strength);
@@ -105,14 +107,14 @@ private:
     auto [bid_ask, imbalance] = getOrderBookMetrics();
 
     MarketFeatures features {
-        .volatility = volatility,
-        .trend_strength = trend,
-        .order_book_imbalance = imbalance,
-        .cointegration_zscore = computeCointegration(),
-        .price_impact = estimatePriceImpact(liquidity),
-        .liquidity_score = liquidity,
-        .short_term_reversal = detectShortTermReversal(),
-        .bid_ask_spread = bid_ask
+      .volatility = volatility,
+      .trend_strength = trend,
+      .order_book_imbalance = imbalance,
+      .cointegration_zscore = computeCointegration(),
+      .price_impact = estimatePriceImpact(liquidity),
+      .liquidity_score = liquidity,
+      .short_term_reversal = detectShortTermReversal(),
+      .bid_ask_spread = bid_ask
     };
 
     aiEngine->computeAIFeatures(features);
@@ -198,13 +200,13 @@ private:
   void updateEWMA(std::span<const double> signals) {
     if (has_avx2()) {
       for (size_t i = 0; i < signals.size() - 3; i += 4) {
-        __m256d signals_vec = _mm256_loadu_pd(&signals[i]);
-        __m256d pnl_vec = _mm256_mul_pd(signals_vec, _mm256_set1_pd(0.1));
-        __m256d ewma_vec = _mm256_loadu_pd(&ewma_pnl[i]);
-        __m256d alpha_vec = _mm256_set1_pd(alpha);
+        __m256d signals_vec     = _mm256_loadu_pd(&signals[i]);
+        __m256d pnl_vec         = _mm256_mul_pd(signals_vec, _mm256_set1_pd(0.1));
+        __m256d ewma_vec        = _mm256_loadu_pd(&ewma_pnl[i]);
+        __m256d alpha_vec       = _mm256_set1_pd(alpha);
         __m256d one_minus_alpha = _mm256_set1_pd(1.0 - alpha);
-        __m256d result = _mm256_add_pd(_mm256_mul_pd(alpha_vec, pnl_vec),
-          _mm256_mul_pd(one_minus_alpha, ewma_vec));
+        __m256d result          = _mm256_add_pd(_mm256_mul_pd(alpha_vec, pnl_vec), _mm256_mul_pd(one_minus_alpha, ewma_vec));
+
         _mm256_storeu_pd(&ewma_pnl[i], result);
       }
 
@@ -224,50 +226,47 @@ private:
     double total_weight = 0.0, blended_signal = 0.0;
 
     if (has_avx2()) {
-      __m256d ai_vec = _mm256_set1_pd(ai_signal * ai_weight);
-
-      __m256d total_weight_vec = _mm256_setzero_pd();
+      __m256d ai_vec             = _mm256_set1_pd(ai_signal * ai_weight);
+      __m256d total_weight_vec   = _mm256_setzero_pd();
       __m256d blended_signal_vec = _mm256_setzero_pd();
 
       for (size_t i = 0; i < signals.size() - 3; i += 4) {
-        __m256d signals_vec = _mm256_loadu_pd(&signals[i]);
-        __m256d ewma_vec = _mm256_loadu_pd(&ewma_pnl[i]);
-        __m256d thresh_vec = _mm256_set1_pd(confidence_threshold);
-        __m256d min_vec = _mm256_set1_pd(min_weight);
-        __m256d abs_signals = _mm256_andnot_pd(_mm256_set1_pd(-0.0), signals_vec);
-        __m256d mask = _mm256_and_pd(
-          _mm256_cmp_pd(ewma_vec, min_vec, _CMP_GT_OQ),
-          _mm256_cmp_pd(abs_signals, thresh_vec, _CMP_GT_OQ)
-        );
-
-        __m256d weights = _mm256_and_pd(ewma_vec, mask);
+        __m256d signals_vec      = _mm256_loadu_pd(&signals[i]);
+        __m256d ewma_vec         = _mm256_loadu_pd(&ewma_pnl[i]);
+        __m256d thresh_vec       = _mm256_set1_pd(confidence_threshold);
+        __m256d min_vec          = _mm256_set1_pd(min_weight);
+        __m256d abs_signals      = _mm256_andnot_pd(_mm256_set1_pd(-0.0), signals_vec);
+        __m256d mask             = _mm256_and_pd(_mm256_cmp_pd(ewma_vec, min_vec, _CMP_GT_OQ), _mm256_cmp_pd(abs_signals, thresh_vec, _CMP_GT_OQ));
+        __m256d weights          = _mm256_and_pd(ewma_vec, mask);
         __m256d weighted_signals = _mm256_mul_pd(weights, signals_vec);
 
-        total_weight_vec = _mm256_add_pd(total_weight_vec, weights);
+        total_weight_vec   = _mm256_add_pd(total_weight_vec, weights);
         blended_signal_vec = _mm256_add_pd(blended_signal_vec, weighted_signals);
       }
 
       double weight_arr[4], signal_arr[4];
+      
       _mm256_storeu_pd(weight_arr, total_weight_vec);
       _mm256_storeu_pd(signal_arr, blended_signal_vec);
-      total_weight = weight_arr[0] + weight_arr[1] + weight_arr[2] + weight_arr[3];
+
+      total_weight   = weight_arr[0] + weight_arr[1] + weight_arr[2] + weight_arr[3];
       blended_signal = signal_arr[0] + signal_arr[1] + signal_arr[2] + signal_arr[3];
 
       for (size_t i = (signals.size() / 4) * 4; i < signals.size(); ++i)
         if (ewma_pnl[i] > min_weight && std::abs(signals[i]) > confidence_threshold) {
-          total_weight += ewma_pnl[i];
+          total_weight   += ewma_pnl[i];
           blended_signal += ewma_pnl[i] * signals[i];
         }
     }
     else {
       for (size_t i = 0; i < signals.size(); ++i)
         if (ewma_pnl[i] > min_weight && std::abs(signals[i]) > confidence_threshold) {
-          total_weight += ewma_pnl[i];
+          total_weight   += ewma_pnl[i];
           blended_signal += ewma_pnl[i] * signals[i];
         }
     }
 
-    total_weight += ai_weight;
+    total_weight   += ai_weight;
     blended_signal += ai_weight * ai_signal;
 
     if (features.anomaly_score > 0.95) {
@@ -296,48 +295,40 @@ private:
   std::tuple<double, int, bool> smartExecute(double signal, const MarketFeatures& features) {
     auto [ai_adjustment, risk_score] = aiEngine->predictOptimalExecution(features);
 
-    //calculate the base order size from the signal
-    double base_size = std::abs(signal) * 100;
+    double base_size = std::abs(signal) * 100;    //calculate the base order size from the signal
 
-    //apply AI-driven adjustments for risk and news sentiment
-    double ai_adjusted_size = base_size * (1.0 - risk_score);
+    double ai_adjusted_size = base_size * (1.0 - risk_score);    //apply AI-driven adjustments for risk and news sentiment
     ai_adjusted_size *= 1.0 + std::tanh(features.news_sentiment * 2.0);
 
-    //adjust for current exposure to manage risk
-    double exposure_adjusted_size = ai_adjusted_size / (1.0 + std::abs(current_exposure) / max_exposure);
+    double exposure_adjusted_size = ai_adjusted_size / (1.0 + std::abs(current_exposure) / max_exposure);    //adjust for current exposure to manage risk
 
-    //apply liquidity and price impact adjustments
-    if (features.liquidity_score < 0.3) {
+    if (features.liquidity_score < 0.3) {    //apply liquidity and price impact adjustments
       exposure_adjusted_size *= 0.5; // Reduce size by half if liquidity is low
     }
+
     double final_size = exposure_adjusted_size * std::exp(-5.0 * features.price_impact);
 
-    //clamp the final size to ensure it stays within allowed limits
-    double size = std::clamp(final_size, 1.0, max_order_size);
+    double size = std::clamp(final_size, 1.0, max_order_size);    //clamp the final size to ensure it stays within allowed limits
 
     if (features.anomaly_score > 0.98) {
       L("Critical anomaly detected - order canceled");
       return { 0.0, 0, false };
     }
 
-    int qty = static_cast<int>(size);
+    int qty      = static_cast<int>(size);
     double price = 100.0 * (1.0 + (signal > 0 ? features.bid_ask_spread : -features.bid_ask_spread));
-    char side = (signal > 0) ? 'B' : 'S'; // buy/sell
+    char side    = (signal > 0) ? 'B' : 'S'; // buy/sell
 
-    Order order{
-        .exchange = Exchange::NYSE,  // ph exchange
-        .side = side,
-        .symbol = symbols.AAPL,      // ph symbol
-        .order_id = order_id_counter.fetch_add(1, std::memory_order_relaxed),
-        .price = price,
-        .quantity = qty,
+    Order order {
+      .exchange = Exchange::NYSE,  // ph exchange
+      .side = side,
+      .symbol = symbols.AAPL,      // ph symbol
+      .order_id = order_id_counter.fetch_add(1, std::memory_order_relaxed),
+      .price = price,
+      .quantity = qty,
     };
 
-    if (limitCheck(price, qty) && sendOrder(order)) {
-      return { price, qty, true };
-    }
-
-    return { price, qty, false }; 
+    return { price, qty, limitCheck(price, qty) && sendOrder(order) };
   }
 
   void updateExposure(bool is_buy, double price, int quantity) {
@@ -351,13 +342,14 @@ private:
   double detectShortTermReversal()                { return -0.3;                     }
   double getLatestReturn()                        { return 0.001;                    }
   
-  bool limitCheck(double price, int qty) {
+  bool limitCheck(const double price, const int qty) {
     return std::abs(current_exposure) + price * qty <= max_exposure && price * qty <= vol_limit * 10000.0;
   }
 
   bool has_avx2() const {
 #if defined(_MSC_VER)
     int cpuInfo[4];
+
     __cpuid(cpuInfo, 0);
 
     if (cpuInfo[0] >= 7) {
@@ -369,6 +361,7 @@ private:
 
     if (__get_cpuid(0, &eax, &ebx, &ecx, &edx) && eax >= 7) {
       __get_cpuid_count(7, 0, &eax, &ebx, &ecx, &edx);
+
       return (ebx & (1 << 5)) != 0;
     }
 #endif
