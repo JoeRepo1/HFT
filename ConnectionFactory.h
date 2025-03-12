@@ -1,11 +1,5 @@
 #pragma once  //ConnectionFactory.h
 
-#include <shared_mutex>
-#include <unordered_map>
-#include <memory>
-
-#include "InitGlobals.h"
-
 class ConnectionFactory {
 public:
   enum class Protocol : uint8_t { TCP, UDP, FIX, MULTICAST, SHARED_MEM };
@@ -17,14 +11,14 @@ public:
     uint16_t port;
   };
 
-  class Connection {  // Base connection class (abstract)
+  class Connection {
   public:
     virtual ~Connection() = default;
     virtual bool send(const Order& order) = 0;
     virtual bool is_healthy() const = 0;
     virtual uint64_t last_latency_ns() const = 0;
 
-    const ConnectionConfig& config() const { return _config; }    // Expose configuration
+    const ConnectionConfig& config() const { return _config; }
 
   protected:
     Connection(const ConnectionConfig& cfg) : _config(cfg) {}

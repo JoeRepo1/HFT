@@ -1,12 +1,5 @@
 #pragma once  //InitGlobals.h
 
-#ifdef _MSC_VER
-#include <intrin.h>
-#else
-#include <cpuid.h>
-#include <x86intrin.h>
-#endif
-
 enum class Exchange : uint8_t { NYSE, NASDAQ, CME };
 
 struct alignas(64) Order {
@@ -31,7 +24,7 @@ struct alignas(64) Order {
   }
 };
 
-static_assert(sizeof(Order) == 64, "Order struct shd be 1 cache line (64 bytes)");
+static_assert(sizeof(Order) == 64, "Order struct shd be >= 1 cache line (64 bytes)");
 
 struct MarketFeatures {
   double volatility;

@@ -1,16 +1,5 @@
 #pragma once  //AsyncLogger.h
 
-#include <atomic>
-#include <chrono>
-#include <ctime>
-#include <fstream>
-#include <iomanip>
-#include <iostream>
-#include <sstream>
-#include <string>
-#include <thread>
-#include <vector>
-
 #define L logger.log
 
 class AsyncLogger {

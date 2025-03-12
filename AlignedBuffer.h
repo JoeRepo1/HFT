@@ -1,16 +1,5 @@
 #pragma once  //AlignedBuffer.h
 
-#include <algorithm>
-#include <span>
-#include <stdexcept>
-#include <type_traits>
-
-#ifdef _MSC_VER
-#include <malloc.h>
-#else
-#include <cstdlib>
-#endif
-
 template <typename T> concept Numeric = std::is_arithmetic_v<T>;
 template <Numeric T> class AlignedBuffer {
 public:

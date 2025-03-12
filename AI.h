@@ -11,8 +11,8 @@ public:
 
   double predictSignal(const MarketFeatures& features) {
     return 0.3 * lstmSignal(features)
-      + 0.4 * gnnOrderBookAnalysis(features)
-      + 0.3 * newsSentimentScore(features);
+         + 0.4 * gnnOrderBookAnalysis(features)
+         + 0.3 * newsSentimentScore(features);
   }
 
   void computeAIFeatures(MarketFeatures& features) {

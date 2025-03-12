@@ -1,3 +1,4 @@
+#include "pch.h"
 #include "AsyncLogger.h"
 
 AsyncLogger::AsyncLogger(const std::string& filename): log_file(filename, std::ios::app), head(0), tail(0), stop_flag(false) {
