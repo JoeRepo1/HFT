@@ -56,5 +56,16 @@ using std::array, std::atomic, std::function, std::launch, std::pair, std::range
 #include <string>
 #include <utility>
 
+//------ AlignedBuffer
+#include <algorithm>
+#include <cstddef>
+#include <memory>
+#include <span>
+#include <stdexcept>
+
+using std::fill_n, std::swap;
+using std::is_arithmetic_v;
+using std::bad_alloc;
+
 //------ Globals
 #include "InitGlobals.h"

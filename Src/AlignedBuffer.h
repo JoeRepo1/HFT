@@ -1,40 +1,42 @@
 #pragma once  //AlignedBuffer.h
 
-template <typename T> concept Numeric = std::is_arithmetic_v<T>;
+template <typename T> concept Numeric = is_arithmetic_v<T>;
 template <Numeric T> class AlignedBuffer {
 public:
-  AlignedBuffer(size_t size) : size_(size) {
-    data_ = static_cast<T*>(_aligned_malloc(size * sizeof(T), 32));
+  AlignedBuffer(size_t size) : _size(size) {
+    _data = static_cast<T*>(_aligned_malloc(size * sizeof(T), 32));
 
-    if (!data_) throw std::bad_alloc();
+    if (!_data) throw bad_alloc();
 
-    std::fill_n(data_, size, T{});
+    fill_n(_data, size, T{});
   }
 
-  ~AlignedBuffer() { _aligned_free(data_); }
+  ~AlignedBuffer() { _aligned_free(_data); }
 
-  std::span<T> span() { return std::span<T>(data_, size_); }
-  std::span<const T> span() const { return std::span<const T>(data_, size_); }
-  T& operator[](size_t i) { return data_[i]; }
-  const T& operator[](size_t i) const { return data_[i]; }
-  T* data() { return data_; }
-  const T* data() const { return data_; }
+  std::span<T> span()                 { return std::span<T>(_data, _size); }
+  std::span<const T> span() const     { return std::span<const T>(_data, _size); }
 
-  AlignedBuffer(AlignedBuffer&& other) noexcept : data_(nullptr), size_(0) {
-    std::swap(data_, other.data_);
-    std::swap(size_, other.size_);
+  T& operator[](size_t i)             { return _data[i]; }
+  const T& operator[](size_t i) const { return _data[i]; }
+  
+  T* data()                           { return _data; }
+  const T* data() const               { return _data; }
+
+  AlignedBuffer(AlignedBuffer&& other) noexcept : _data(nullptr), _size(0) {
+    swap(_data, other._data);
+    swap(_size, other._size);
   }
 
   AlignedBuffer& operator=(AlignedBuffer&& other) noexcept {
     if (this != &other) {
-      std::swap(data_, other.data_);
-      std::swap(size_, other.size_);
+      swap(_data, other._data);
+      swap(_size, other._size);
     }
 
     return *this;
   }
 
 private:
-  T* data_;
-  size_t size_;
+  T* _data;
+  size_t _size;
 };

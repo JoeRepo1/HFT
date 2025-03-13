@@ -276,11 +276,11 @@ private:
     return { total_weight, blended_signal };
   }
 
-  unordered_map<Exchange, ConnectionFactory::ConnectionPtr> _venue_connections;
+  unordered_map<Exchange, ConnectionFactory::ConnectionPtr> venue_connections;
   Symbols symbols;
 
   bool sendOrder(const Order& order) {
-    auto& conn = _venue_connections[order.exchange];
+    auto& conn = venue_connections[order.exchange];
 
     if (!conn || !conn->is_healthy()) {
       bool ultra_low = (order.symbol == symbols.AAPL || order.symbol == symbols.TSLA);
@@ -301,9 +301,8 @@ private:
 
     double exposure_adjusted_size = ai_adjusted_size / (1.0 + abs(current_exposure) / max_exposure);    //adjust for current exposure to manage risk
 
-    if (features.liquidity_score < 0.3) {    //apply liquidity and price impact adjustments
+    if (features.liquidity_score < 0.3)    //apply liquidity and price impact adjustments
       exposure_adjusted_size *= 0.5;   //reduce size by half if liquidity is low
-    }
 
     double final_size = exposure_adjusted_size * exp(-5.0 * features.price_impact);
 
@@ -334,12 +333,12 @@ private:
     current_exposure += (is_buy ? 1.0 : -1.0) * price * quantity;
   }
 
-  pair<double, double> getOrderBookMetrics() { return { 0.01, 0.2 };            }
-  double computeCointegration()                   { return -1.5;                     }
-  double estimateLiquidity()                      { return 0.7;                      }
-  double estimatePriceImpact(double liquidity)    { return 0.01 / (liquidity + 0.1); }
-  double detectShortTermReversal()                { return -0.3;                     }
-  double getLatestReturn()                        { return 0.001;                    }
+  pair<double, double> getOrderBookMetrics()   { return { 0.01, 0.2 };            }
+  double computeCointegration()                { return -1.5;                     }
+  double estimateLiquidity()                   { return 0.7;                      }
+  double estimatePriceImpact(double liquidity) { return 0.01 / (liquidity + 0.1); }
+  double detectShortTermReversal()             { return -0.3;                     }
+  double getLatestReturn()                     { return 0.001;                    }
   
   bool limitCheck(const double price, const int qty) {
     return abs(current_exposure) + price * qty <= max_exposure && price * qty <= vol_limit * 10000.0;

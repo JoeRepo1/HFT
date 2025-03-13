@@ -24,7 +24,7 @@ struct alignas(64) Order {
   }
 };
 
-static_assert(sizeof(Order) == 64, "Order struct shd be >= 1 cache line (64 bytes)");
+static_assert(sizeof(Order) >= 64, "Order struct shd be >= 1 cache line (64 bytes)");
 
 struct MarketFeatures {
   double volatility;
