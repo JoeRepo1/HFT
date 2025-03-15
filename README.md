@@ -1,8 +1,20 @@
-## Small trading app to demo a few HFT design components and related C++20 features.
-The project demonstrates a hybrid trading system that integrates extensible algorithmic strategies, dynamically selecting and blending their outputs based on real-time market conditions.
+## Small trading app to test a few HFT design components, how they interact and related C++20 features.
+The project demonstrates a hybrid trading system that integrates extensible algorithmic strategies, dynamically blending their outputs based on real-time market conditions.
+
+## Table of Contents
+- [Disclaimer](#disclaimer)
+- [Trading App](#trading-app)
+- [Data/Control Flow](#datacontrol-flow)
+- [System Requirements](#system-requirements)
+- [Build Instructions](#build-instructions)
+- [Execution](#execution)
+- [Architecture Overview](#architecture-overview)
+- [License](#license)
+- [Ethical Risks](#ethical-risks)
+- [AI Integration](#ai-integration)
 
 ## Disclaimer
-This is demonstration code and is probably not suitable for production deployment. Market data and exchange connectivity are represented by placeholder functions.
+The code is probably not suitable for production deployment, as never worked in FinTech. Market data feeds, exchange connectivity and other components are represented by placeholders.
 
 ## Trading App
 - **Strategies**:
