@@ -324,7 +324,7 @@ private:
       .order_id    = order_id_counter.fetch_add(1, memory_order_relaxed),
       .price       = price,
       .quantity    = qty,
-      .strategy_id = OrderStrategy::Hybrid
+      .strategy_id = Strategy::Hybrid
     };
 
     return { price, qty, limitCheck(price, qty) && sendOrder(order) };
