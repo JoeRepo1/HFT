@@ -1,7 +1,7 @@
 ## Small trading app to test a few HFT design components, how they interact and related C++20 features.
 The project demonstrates a hybrid trading system that integrates extensible algorithmic strategies, dynamically blending their outputs based on real-time market conditions.
 
-## Table of Contents
+## Index
 - [Disclaimer](#disclaimer)
 - [Trading App](#trading-app)
 - [Data/Control Flow](#datacontrol-flow)
