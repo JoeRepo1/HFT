@@ -318,12 +318,13 @@ private:
     char side    = (signal > 0) ? 'B' : 'S'; // buy/sell
 
     Order order {
-      .exchange = Exchange::NYSE,  // ph exchange
-      .side = side,
-      .symbol = symbols.AAPL,      // ph symbol
-      .order_id = order_id_counter.fetch_add(1, memory_order_relaxed),
-      .price = price,
-      .quantity = qty,
+      .exchange    = Exchange::NYSE,  // ph exchange
+      .side        = side,
+      .symbol      = symbols.AAPL,      // ph symbol
+      .order_id    = order_id_counter.fetch_add(1, memory_order_relaxed),
+      .price       = price,
+      .quantity    = qty,
+      .strategy_id = OrderStrategy::Hybrid
     };
 
     return { price, qty, limitCheck(price, qty) && sendOrder(order) };

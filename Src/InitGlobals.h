@@ -2,6 +2,11 @@
 
 enum class Exchange : uint8_t { NYSE, NASDAQ, CME };
 
+enum class OrderStrategy : uint32_t {
+  PT = 0x01, MA = 0x02, OBI = 0x04, MI = 0x08, VB = 0x10, HPA = 0x20, AI = 0x40,
+  Hybrid = 0x007F
+};
+
 struct alignas(64) Order {
   Exchange exchange;        
   char side;                
@@ -11,9 +16,9 @@ struct alignas(64) Order {
   double price;             
   int32_t quantity;         
   uint32_t timestamp;       //latency tracking
-  uint64_t strategy_id;     
   uint64_t target_venue_ns; //execution timing
-  char cache_line_padding[16];  //prevent false sharing with adjacent objects
+  OrderStrategy strategy_id;
+  char cache_line_padding[20];  //prevent false sharing with adjacent objects
 
   void prefetch() const {
 #if defined(_MSC_VER)
