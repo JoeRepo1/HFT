@@ -14,7 +14,7 @@ The project demonstrates a hybrid trading system that integrates extensible algo
 - [AI Integration](#ai-integration)
 
 ## Disclaimer
-The code is probably not suitable for production deployment, as never worked in FinTech. Market data feeds, exchange connectivity and other components are represented by placeholders.
+The code is probably not suitable for production deployment, as never worked in FinTech. Market data feeds, exchange connectivity and other components are represented by placeholders.  The readme is mostly AI generated.
 
 ## Trading App
 - **Strategies**:
