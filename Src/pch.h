@@ -44,12 +44,20 @@ using std::array, std::atomic, std::function, std::launch, std::pair, std::range
 #include <atomic>
 #include <chrono>
 #include <ctime>
+#include <format>
 #include <fstream>
 #include <iomanip>
 #include <iostream>
 #include <sstream>
 #include <string>
 #include <thread>
+#include <vector>
+
+#ifdef _WIN32
+#include <windows.h>
+#else
+#include <pthread.h>
+#endif
 
 //------ AI
 #include <filesystem>
