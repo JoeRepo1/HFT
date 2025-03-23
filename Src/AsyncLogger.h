@@ -1,7 +1,5 @@
 #pragma once  //AsyncLogger.h
 
-#define L logger.log
-
 struct alignas(64) AtomicCounter : public std::atomic<size_t> {
   using std::atomic<size_t>::load;
   using std::atomic<size_t>::store;
@@ -10,6 +8,8 @@ struct alignas(64) AtomicCounter : public std::atomic<size_t> {
 
   const char line_padding[(64 - sizeof(std::atomic<size_t>) % 64) % 64];
 };
+
+#define L logger.log
 
 class AsyncLogger {
 public:
@@ -34,11 +34,7 @@ public:
 
     std::ostringstream& log_entry = entry_buffers[current_head];
 
-#if defined(_MSC_VER)
-    _mm_prefetch(reinterpret_cast<const char*>(&log_entry), _MM_HINT_T0);
-#elif defined(__GNUC__) || defined(__clang__)
-    __builtin_prefetch(&log_entry);
-#endif
+    Prefetch(&log_entry);
 
     log_entry.str({});
     log_entry.clear();

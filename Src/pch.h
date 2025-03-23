@@ -43,6 +43,7 @@ using std::array, std::atomic, std::function, std::launch, std::pair, std::range
 //------ AsyncLogger
 #include <atomic>
 #include <chrono>
+#include <cstdio>
 #include <ctime>
 #include <format>
 #include <fstream>
@@ -53,10 +54,13 @@ using std::array, std::atomic, std::function, std::launch, std::pair, std::range
 #include <thread>
 #include <vector>
 
-#ifdef _WIN32
+#ifdef _MSC_VER
+#include <intrin.h>
 #include <windows.h>
-#else
+#elif defined(__GNUC__) || defined(__clang__)
 #include <pthread.h>
+#include <time.h>
+#include <x86intrin.h>
 #endif
 
 //------ AI
@@ -76,4 +80,5 @@ using std::is_arithmetic_v;
 using std::bad_alloc;
 
 //------ Globals
+#include "mac.h"
 #include "InitGlobals.h"

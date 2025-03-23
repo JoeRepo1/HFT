@@ -20,13 +20,7 @@ struct alignas(64) Order {
   Strategy strategy_id;
   char cache_line_padding[20];  //prevent false sharing with adjacent objects
 
-  void prefetch() const {
-#if defined(_MSC_VER)
-    _mm_prefetch(reinterpret_cast<const char*>(this), _MM_HINT_T0);
-#elif defined(__GNUC__) || defined(__clang__)
-    __builtin_prefetch(this, 0, 3);
-#endif
-  }
+  void prefetch() const { Prefetch(this) }
 };
 
 static_assert(sizeof(Order) >= 64, "Order struct shd be >= 1 cache line (64 bytes)");
